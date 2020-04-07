@@ -75,7 +75,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"
-            app:srl_direction="bottom">
+            app:srl_direction="both">
 
             <androidx.core.widget.NestedScrollView
                 android:layout_width="match_parent"

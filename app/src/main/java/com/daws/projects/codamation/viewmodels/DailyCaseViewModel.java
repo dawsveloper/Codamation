@@ -60,31 +60,22 @@ public class DailyCaseViewModel extends BaseViewModel {
 
                             try{
                                 JSONArray dailyCaseArray = response.getJSONArray("data");
-                                RegionDailyCaseModel tempCaseModel = new RegionDailyCaseModel();
 
                                 for (int i = 0; i < dailyCaseArray.length(); i++){
                                     JSONObject dailyCaseObject = dailyCaseArray.getJSONObject(i);
                                     Object dailyObject = dailyCaseObject.get("jumlahKasusBaruperHari");
                                     if (ValidationHelper.checkNotNullOrEmpty(dailyObject.toString())){
                                         RegionDailyCaseModel regionDailyCaseModel = new RegionDailyCaseModel(dailyCaseObject);
-                                        if (regionDailyCaseModel.getDeathCaseDaily() != null) {
+                                        if (regionDailyCaseModel.getDeathCaseDaily() != null)
                                             regionDailyCaseModelList.add(regionDailyCaseModel);
-                                            if (i == dailyCaseArray.length() - 2){
-                                                tempCaseModel = regionDailyCaseModel;
-                                            }
-
-                                            if (i == dailyCaseArray.length() - 1){
-                                                latestCaseModel = regionDailyCaseModel;
-                                            }
-                                        }
-                                        else
-                                        if (i == dailyCaseArray.length() - 1)
-                                            latestCaseModel = tempCaseModel;
                                     }
                                 }
                             } catch (JSONException e){
                                 e.printStackTrace();
                             }
+
+                            if (regionDailyCaseModelList.size() > 0)
+                                latestCaseModel = regionDailyCaseModelList.get(regionDailyCaseModelList.size() - 1);
 
                             dailyCaseLiveData.setValue(regionDailyCaseModelList);
                             latestCaseLiveData.setValue(latestCaseModel);
