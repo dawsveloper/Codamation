@@ -148,6 +148,8 @@ public class UIHelper {
             LineData data = new LineData(dataSets);
             lineChart.setData(data);
         }
+
+        lineChart.invalidate();
     }
 
     private LineDataSet setLineDataSetNoBackground(ArrayList<Entry> dataEntries, int lineColor, LineChart lineChart){

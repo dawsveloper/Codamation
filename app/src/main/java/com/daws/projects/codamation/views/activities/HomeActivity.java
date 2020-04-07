@@ -16,10 +16,11 @@ import com.daws.projects.codamation.databinding.ItemInfoBinding;
 import com.daws.projects.codamation.databinding.ItemMediaBinding;
 import com.daws.projects.codamation.databinding.ItemNewsBinding;
 import com.daws.projects.codamation.helpers.DataHelper;
-import com.daws.projects.codamation.helpers.DateHelper;
 import com.daws.projects.codamation.models.MediaModel;
 import com.daws.projects.codamation.models.NewsModel;
 import com.daws.projects.codamation.viewmodels.SummaryGlobalCaseViewModel;
+import com.omadahealth.github.swipyrefreshlayout.library.SwipyRefreshLayout;
+import com.omadahealth.github.swipyrefreshlayout.library.SwipyRefreshLayoutDirection;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -41,7 +42,6 @@ public class HomeActivity extends BaseActivity<ActivityHomeBinding> {
 
     private SummaryGlobalCaseViewModel summaryGlobalCaseViewModel;
 
-    private String lastUpdate;
     private boolean pressedOnce = false;
     private JSONArray newsJSONArray;
     private JSONArray mediaJSONArray;
@@ -56,7 +56,6 @@ public class HomeActivity extends BaseActivity<ActivityHomeBinding> {
         super.initData();
 
         summaryGlobalCaseViewModel = ViewModelProviders.of(this).get(SummaryGlobalCaseViewModel.class);
-        lastUpdate = DateHelper.getInstance().getCurrentDate();
 
         imageInfoList = new ArrayList<>();
         imageInfoList.add(R.drawable.slide1);
@@ -128,17 +127,6 @@ public class HomeActivity extends BaseActivity<ActivityHomeBinding> {
                         Intent mediaIntent = new Intent(this, MediaActivity.class);
                         mediaIntent.putExtra(GlobalVariable.NAME_MEDIA_ID, item.getId());
                         startActivity(mediaIntent);
-
-//                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O){
-//                        }
-//                        else {
-//                            Intent webIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(item.getVideoUrl()));
-//                            try {
-//                                startActivity(webIntent);
-//                            } catch (ActivityNotFoundException ex) {
-//                                ex.printStackTrace();
-//                            }
-//                        }
                     });
                 })
         );
@@ -152,13 +140,14 @@ public class HomeActivity extends BaseActivity<ActivityHomeBinding> {
         binding.setNewsAdapter(newsModelAdapter);
         binding.setMediaAdapter(mediaModelAdapter);
 
-        summaryGlobalCaseViewModel.getGlobalSummaryCaseLiveData()
-                .observe(this, globalSummaryCaseModel -> binding.setGlobalModel(globalSummaryCaseModel));
+        getNetworkData();
 
-        summaryGlobalCaseViewModel.getLocalSummaryCaseLiveData()
-                .observe(this, localSummaryCaseModel -> binding.setIndonesiaModel(localSummaryCaseModel));
-
-        binding.setLastUpdate(lastUpdate);
+        binding.refresh.setOnRefreshListener(direction -> {
+            if (direction == SwipyRefreshLayoutDirection.TOP){
+                binding.refresh.setRefreshing(true);
+                getNetworkData();
+            }
+        });
         binding.newsMore.setOnClickListener(v -> startActivity(new Intent(this, NewsDetailActivity.class)));
         binding.localDetail.setOnClickListener(v ->
                 startActivityForResult(new Intent(this, LocalCaseActivity.class), GlobalVariable.REQUEST_REFRESH));
@@ -166,6 +155,20 @@ public class HomeActivity extends BaseActivity<ActivityHomeBinding> {
                 startActivityForResult(new Intent(this, GlobalCaseActivity.class), GlobalVariable.REQUEST_REFRESH));
         binding.info.setOnClickListener(v ->
                 startActivityForResult(new Intent(this, InformationActivity.class), GlobalVariable.REQUEST_REFRESH));
+    }
+
+    private void getNetworkData(){
+        summaryGlobalCaseViewModel.getGlobalSummaryCaseLiveData()
+                .observe(this, globalSummaryCaseModel -> {
+                    binding.setGlobalModel(globalSummaryCaseModel);
+                    binding.setLastUpdate(globalSummaryCaseModel.getLastUpdate());
+                });
+
+        summaryGlobalCaseViewModel.getLocalSummaryCaseLiveData()
+                .observe(this, localSummaryCaseModel -> {
+                    binding.setIndonesiaModel(localSummaryCaseModel);
+                    binding.refresh.setRefreshing(false);
+                });
     }
 
     @Override

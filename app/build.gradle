@@ -13,7 +13,7 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -70,6 +70,8 @@ dependencies {
 
     // Swipe Refresh
     implementation 'com.github.omadahealth:swipy:1.2.3@aar'
+
+    // Youtube Player API
     implementation files('libs/YouTubeAndroidPlayerApi.jar')
 
     // Glide

@@ -1,5 +1,7 @@
 package com.daws.projects.codamation.models;
 
+import com.daws.projects.codamation.helpers.DateHelper;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -13,6 +15,7 @@ public class SummaryGlobalCaseModel {
     private int active;
     private int recovered;
     private int death;
+    private String lastUpdate;
 
     public SummaryGlobalCaseModel(JSONObject responseObject){
         try {
@@ -37,6 +40,14 @@ public class SummaryGlobalCaseModel {
                 setRecovered(responseObject.getInt("sembuh"));
             if (responseObject.has("meninggal"))
                 setDeath(responseObject.getInt("meninggal"));
+
+            if (responseObject.has("lastUpdate")){
+                String originalDateString = responseObject.getString("lastUpdate");
+                setLastUpdate(DateHelper.getInstance().convertDateToFormattedDate(
+                        DateHelper.getInstance().convertStringToDate(originalDateString, DateHelper.getInstance().getShortDateWithDash()),
+                        DateHelper.getInstance().getLongDateWithMonthNameFormat()
+                ));
+            }
         } catch (JSONException e){
             e.printStackTrace();
         }

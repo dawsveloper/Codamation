@@ -70,7 +70,7 @@
                 android:paddingBottom="@dimen/_50sdp"
                 android:clipToPadding="false"
                 android:adapter="@{newsAdapter}"
-                app:setupVerticalRecyclerView="@{@dimen/_5sdp}"
+                app:setupVerticalRecyclerView="@{@dimen/_15sdp}"
                 tools:listitem="@layout/item_news_detail"/>
         </androidx.core.widget.NestedScrollView>
 

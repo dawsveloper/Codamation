@@ -124,4 +124,10 @@ public class MediaActivity extends BaseVideoActivity<ActivityMediaBinding>{
 
         }
     }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        finish();
+    }
 }

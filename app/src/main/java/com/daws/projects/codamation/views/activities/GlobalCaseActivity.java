@@ -39,6 +39,7 @@ public class GlobalCaseActivity extends BaseActivity<ActivityGlobalCaseBinding> 
     private int comparatorCaseValue;
     private int incrementIndex;
     private int lastIndex;
+    private boolean refreshed;
 
     @Override
     protected int attachLayout() {
@@ -75,10 +76,13 @@ public class GlobalCaseActivity extends BaseActivity<ActivityGlobalCaseBinding> 
         getRegionData();
         binding.setCaseAdapter(regionAdapter);
         binding.refreshRegion.setOnRefreshListener(direction -> {
-            if (direction == SwipyRefreshLayoutDirection.BOTTOM){
-                binding.refreshRegion.setRefreshing(true);
+            binding.refreshRegion.setRefreshing(true);
+            refreshed = true;
+
+            if (direction == SwipyRefreshLayoutDirection.BOTTOM)
                 loadMoreRegionData(lastIndex, incrementIndex);
-            }
+            else
+                getRegionData();
         });
         binding.back.setOnClickListener(v -> onBackPressed());
     }
@@ -106,6 +110,7 @@ public class GlobalCaseActivity extends BaseActivity<ActivityGlobalCaseBinding> 
         regionCaseViewModel.getSummaryRegionCaseLiveData(false)
                 .observe(this, countryModelList -> {
                     regionCaseList = countryModelList;
+                    filteredRegionCaseList = new ArrayList<>();
 
                     Collections.sort(regionCaseList, (regionA, regionB) -> regionB.getCasePositive()-regionA.getCasePositive());
 
@@ -117,29 +122,34 @@ public class GlobalCaseActivity extends BaseActivity<ActivityGlobalCaseBinding> 
 
                     regionAdapter.setMainData(filteredRegionCaseList);
                     binding.setLoading(false);
+                    binding.refreshRegion.setRefreshing(false);
         });
 
         dailyCaseViewModel.getDailyCaseLiveData(false)
                 .observe(this, dailyCaseModelList->{
-                    regionDailyCaseModelList = dailyCaseModelList;
 
-                    for (RegionDailyCaseModel caseModel : regionDailyCaseModelList){
-                        dailyValues.add(new Entry(regionDailyCaseModelList.indexOf(caseModel), (float)caseModel.getTotalCase()));
+                    if (dailyCaseModelList.size() > 0){
+                        regionDailyCaseModelList = dailyCaseModelList;
+                        dailyValues.clear();
 
-                        if (regionDailyCaseModelList.indexOf(caseModel) == 0)
-                            binding.setStartDate(caseModel.getFormattedDate(caseModel.getDateInString()));
-                        else if (regionDailyCaseModelList.indexOf(caseModel) == regionDailyCaseModelList.size() - 1)
-                            binding.setEndDate(caseModel.getFormattedDate(caseModel.getDateInString()));
+                        for (RegionDailyCaseModel caseModel : regionDailyCaseModelList){
+                            dailyValues.add(new Entry(regionDailyCaseModelList.indexOf(caseModel), (float)caseModel.getTotalCase()));
 
-                        if (regionDailyCaseModelList.indexOf(caseModel) == regionDailyCaseModelList.size() - 2)
-                            comparatorCaseValue = caseModel.getTotalCase();
-                        else if (regionDailyCaseModelList.indexOf(caseModel) == regionDailyCaseModelList.size() - 1)
-                            currentCaseValue = caseModel.getTotalCase();
+                            if (regionDailyCaseModelList.indexOf(caseModel) == 0)
+                                binding.setStartDate(caseModel.getFormattedDate(caseModel.getDateInString()));
+                            else if (regionDailyCaseModelList.indexOf(caseModel) == regionDailyCaseModelList.size() - 1)
+                                binding.setEndDate(caseModel.getFormattedDate(caseModel.getDateInString()));
+
+                            if (regionDailyCaseModelList.indexOf(caseModel) == regionDailyCaseModelList.size() - 2)
+                                comparatorCaseValue = caseModel.getTotalCase();
+                            else if (regionDailyCaseModelList.indexOf(caseModel) == regionDailyCaseModelList.size() - 1)
+                                currentCaseValue = caseModel.getTotalCase();
+                        }
+
+                        caseGrowthValue = (currentCaseValue - comparatorCaseValue) * 100;
+                        binding.setCaseGrowth(caseGrowthValue / comparatorCaseValue);
+                        setChart();
                     }
-
-                    caseGrowthValue = (currentCaseValue - comparatorCaseValue) * 100;
-                    binding.setCaseGrowth(caseGrowthValue / comparatorCaseValue);
-                    setChart();
         });
     }
 
@@ -167,9 +177,10 @@ public class GlobalCaseActivity extends BaseActivity<ActivityGlobalCaseBinding> 
     }
 
     private void setChart(){
-        UIHelper.newInstance(this).setupLineChart(binding.caseHistory);
+
+        if (!refreshed)
+            UIHelper.newInstance(this).setupLineChart(binding.caseHistory);
         UIHelper.newInstance(this).setLineChartData(dailyValues, binding.caseHistory);
-        binding.caseHistory.invalidate();
     }
 
     @Override

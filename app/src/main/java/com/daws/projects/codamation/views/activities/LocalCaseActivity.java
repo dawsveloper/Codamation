@@ -17,6 +17,8 @@ import com.daws.projects.codamation.models.SummaryRegionCaseModel;
 import com.daws.projects.codamation.viewmodels.DailyCaseViewModel;
 import com.daws.projects.codamation.viewmodels.SummaryRegionCaseViewModel;
 import com.github.mikephil.charting.data.Entry;
+import com.omadahealth.github.swipyrefreshlayout.library.SwipyRefreshLayout;
+import com.omadahealth.github.swipyrefreshlayout.library.SwipyRefreshLayoutDirection;
 
 import org.json.JSONArray;
 
@@ -29,7 +31,6 @@ public class LocalCaseActivity extends BaseActivity<ActivityLocalCaseBinding> {
     private SummaryRegionCaseViewModel localRegionCaseViewModel;
 
     private ArrayList<Entry> dailyValues;
-    private List<String> dailyDateName;
     private List<RegionDailyCaseModel> regionDailyCaseModelList;
     private List<SummaryRegionCaseModel> summaryRegionCaseModelList;
     private SimpleRecyclerAdapter<SummaryRegionCaseModel> localSummaryCaseAdapter;
@@ -37,6 +38,7 @@ public class LocalCaseActivity extends BaseActivity<ActivityLocalCaseBinding> {
     private double caseGrowthValue;
     private int currentCaseValue;
     private int comparatorCaseValue;
+    private boolean refreshed = false;
 
     @Override
     protected int attachLayout() {
@@ -50,12 +52,10 @@ public class LocalCaseActivity extends BaseActivity<ActivityLocalCaseBinding> {
         dailyCaseViewModel = ViewModelProviders.of(this).get(DailyCaseViewModel.class);
         localRegionCaseViewModel = ViewModelProviders.of(this).get(SummaryRegionCaseViewModel.class);
 
-        dailyDateName = new ArrayList<>();
         dailyValues = new ArrayList<>();
         regionDailyCaseModelList = new ArrayList<>();
         summaryRegionCaseModelList = new ArrayList<>();
         localSummaryCaseAdapter = new SimpleRecyclerAdapter<>(
-                summaryRegionCaseModelList,
                 R.layout.item_case,
                 ((holder, item) -> {
                     ItemCaseBinding binding = (ItemCaseBinding) holder.getLayoutBinding();
@@ -71,6 +71,15 @@ public class LocalCaseActivity extends BaseActivity<ActivityLocalCaseBinding> {
         getNetworkData();
 
         binding.setCaseAdapter(localSummaryCaseAdapter);
+
+        binding.refresh.setOnRefreshListener(direction -> {
+            if (direction == SwipyRefreshLayoutDirection.TOP){
+                binding.refresh.setRefreshing(true);
+                refreshed = true;
+
+                getNetworkData();
+            }
+        });
 
         binding.back.setOnClickListener(v -> onBackPressed());
 
@@ -95,41 +104,45 @@ public class LocalCaseActivity extends BaseActivity<ActivityLocalCaseBinding> {
 
         dailyCaseViewModel.getDailyCaseLiveData(true)
                 .observe(this, dailyCaseModel -> {
-                    regionDailyCaseModelList = dailyCaseModel;
 
-                    for (RegionDailyCaseModel caseModel : regionDailyCaseModelList){
-                        dailyValues.add(new Entry(regionDailyCaseModelList.indexOf(caseModel), (float)caseModel.getTotalCase()));
-                        dailyDateName.add(caseModel.getDateInString());
+                    if (dailyCaseModel.size() > 0){
+                        regionDailyCaseModelList = dailyCaseModel;
+                        dailyValues.clear();
 
-                        if (regionDailyCaseModelList.indexOf(caseModel) == 0)
-                            binding.setStartDate(caseModel.getFormattedDate());
-                        else if (regionDailyCaseModelList.indexOf(caseModel) == regionDailyCaseModelList.size() - 1)
-                            binding.setEndDate(caseModel.getFormattedDate());
+                        for (RegionDailyCaseModel caseModel : regionDailyCaseModelList){
+                            dailyValues.add(new Entry(regionDailyCaseModelList.indexOf(caseModel), (float)caseModel.getTotalCase()));
 
-                        if (regionDailyCaseModelList.indexOf(caseModel) == regionDailyCaseModelList.size() - 2)
-                            comparatorCaseValue = caseModel.getTotalCase();
-                        else if (regionDailyCaseModelList.indexOf(caseModel) == regionDailyCaseModelList.size() - 1)
-                            currentCaseValue = caseModel.getTotalCase();
+                            if (regionDailyCaseModelList.indexOf(caseModel) == 0)
+                                binding.setStartDate(caseModel.getFormattedDate());
+                            else if (regionDailyCaseModelList.indexOf(caseModel) == regionDailyCaseModelList.size() - 1)
+                                binding.setEndDate(caseModel.getFormattedDate());
 
+                            if (regionDailyCaseModelList.indexOf(caseModel) == regionDailyCaseModelList.size() - 2)
+                                comparatorCaseValue = caseModel.getTotalCase();
+                            else if (regionDailyCaseModelList.indexOf(caseModel) == regionDailyCaseModelList.size() - 1)
+                                currentCaseValue = caseModel.getTotalCase();
+
+                        }
+
+                        caseGrowthValue = (currentCaseValue - comparatorCaseValue) * 100;
+                        binding.setCaseGrowth(caseGrowthValue / comparatorCaseValue);
+                        setChart();
                     }
-
-                    caseGrowthValue = (currentCaseValue - comparatorCaseValue) * 100;
-                    binding.setCaseGrowth(caseGrowthValue / comparatorCaseValue);
-                    setChart();
                 });
 
         localRegionCaseViewModel.getSummaryRegionCaseLiveData(true)
                 .observe(this, localRegionCaseList -> {
                     summaryRegionCaseModelList = localRegionCaseList;
-                    localSummaryCaseAdapter.addAllItem(summaryRegionCaseModelList);
+                    localSummaryCaseAdapter.setMainData(summaryRegionCaseModelList);
                     binding.setLoading(false);
+                    binding.refresh.setRefreshing(false);
                 });
     }
 
     private void setChart(){
-        UIHelper.newInstance(this).setupLineChart(binding.caseHistory);
+        if (!refreshed)
+            UIHelper.newInstance(this).setupLineChart(binding.caseHistory);
         UIHelper.newInstance(this).setLineChartData(dailyValues, binding.caseHistory);
-        binding.caseHistory.invalidate();
     }
 
     @Override

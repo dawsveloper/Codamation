@@ -13,8 +13,6 @@ public abstract class BaseVideoActivity <Binding extends ViewDataBinding> extend
     protected Binding binding;
     abstract protected int attachLayout();
 
-    protected String apikey = "AIzaSyC83eKwxkwpewZntciYDoP5q9DeDSkQDiQ";
-
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
