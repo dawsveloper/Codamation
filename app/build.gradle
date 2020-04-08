@@ -10,6 +10,7 @@ android {
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
+        multiDexEnabled true
     }
     buildTypes {
         release {
@@ -17,13 +18,16 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
-
     dataBinding.enabled = true
     compileOptions {
         sourceCompatibility = 1.8
         targetCompatibility = 1.8
     }
 }
+
+apply plugin: 'com.google.gms.google-services'
+
+apply plugin: 'deploygate'
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
@@ -32,9 +36,10 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.0'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.1'
+    implementation 'com.android.support:multidex:1.0.3'
 
-    // Deployment Gate
-    apply plugin: 'deploygate'
+    // Firebase SDK
+    implementation 'com.google.firebase:firebase-analytics:17.3.0'
 
     // lifecycle
     implementation 'android.arch.lifecycle:extensions:1.1.1'
