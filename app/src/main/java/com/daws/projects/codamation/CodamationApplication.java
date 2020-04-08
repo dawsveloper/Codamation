@@ -1,10 +1,10 @@
 package com.daws.projects.codamation;
 
-import android.app.Application;
+import androidx.multidex.MultiDexApplication;
 
 import com.androidnetworking.AndroidNetworking;
 
-public class CodamationApplication extends Application {
+public class CodamationApplication extends MultiDexApplication {
 
     @Override
     public void onCreate() {
